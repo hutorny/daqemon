@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<!-- status.htm - the Status page
+   This file is a part of DAQEMON application
+   Copyright (C) 2020 -2021 Eugene Hutorny <eugene@hutorny.in.ua>
+   DAQEMON is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License v2
+   as published by the Free Software Foundation;
+   License:  https://opensource.org/licenses/GPL-2.0 -->
+
+<html lang="en">
+  <head>
+	<meta charset="utf-8">
+	<title>DAQEMON - Status</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<meta name="author" content="">
+	<base href="/luci-static/resources/view/daqemon/">
+	<link rel="stylesheet" href="responsive.css">
+	<link rel="stylesheet" href="style.css">
+	<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+	<link rel="icon" type="image/x-icon" sizes="16x16" href="favicon.ico">
+	<style type="text/css">
+	html { overflow: hidden }
+	*[data-status] * { display: none }
+	*[data-status="enabled-running"] #service-enabled,
+	*[data-status="enabled-running"] #service-running,
+	*[data-status="running-enabled"] #service-enabled,
+	*[data-status="running-enabled"] #service-running,
+	*[data-status="enabled"] #service-enabled,
+	*[data-status="enabled"] #service-stopped,
+	*[data-status="running"] #service-disabled,
+	*[data-status=""] #service-stopped,
+	*[data-status=""] #service-disabled,
+	*[data-status="ok"] #server-ok,
+	*[data-status="error"] #server-error,
+	*[data-status="ok"] #queue-ok,
+	*[data-status="error"] #queue-ok,
+	*[data-status=""] #queue-length,
+	*[data-status="-"] .server-unknow,
+	*[data-status="running"] #service-running { display: initial; }
+	*[data-status] *:not(:first-child) { margin-left: 0.1em }
+	#status div { display: flex; flex-flow: row; }
+	#status div:not(:first-child) { margin-top: 0.1em }
+    #status div label { width: 12em; }
+    fieldset > div { margin: 0 0.4em }
+    fieldset#data > label { margin: 0 0.4em; width:100%; text-align: center }
+	fieldset#data { padding: 0 }
+    .grid3c {
+    	display: grid;
+    	grid-template-columns: repeat(3, 1fr);
+		margin: 0;
+    }
+	.grid3c:empty { display: none;}
+	.subgrid {
+    	display: grid;
+    	grid-template-columns: 1fr 1fr;
+		padding: 0 0.4em;
+    }
+	:root { --grid3c-border: solid 1px #ccc; }
+	.grid3c > .subgrid:nth-child(3n+2) { border-left: var(--grid3c-border); }
+	.grid3c > .subgrid:nth-child(3n+3) { border-left: var(--grid3c-border); }
+	.grid3c > .subgrid:nth-last-child(2) { border-bottom: var(--grid3c-border); margin-bottom: -1px; }
+	.grid3c > .subgrid:nth-last-child(3) { border-bottom: var(--grid3c-border); margin-bottom: -1px; }
+	.subgrid { border-top: var(--grid3c-border); }
+	#meta { border-bottom: var(--grid3c-border); }
+	#meta.empty { border-bottom: none }
+    .input label { font-family: monospace; color: #555; padding: 0}
+    .number,
+    .input .value:not(.error) { font-family: monospace; font-weight: 500; }
+	.input .error { font-weight: 100; font-size: 0.9em; color: #D00; white-space: pre; }
+	#datetime { white-space: pre; }
+	#datetime.error { color: #D00; }
+	.log-line { font-size: 0.8em; display:table; font-family: monospace; white-space: pre; box-sizing: border-box;}
+	.log-lines { max-height: 20em; overflow: auto;  }
+	.log-line.log-warn { color: #fcab48 }
+	.log-line.log-err { color: #c00 }
+}
+	</style>
+  </head>
+<body>
+<div id="container">
+  <h2>Status</h2>
+  <fieldset id="status">
+	<legend><label>Overview</label></legend>
+	<div id="service">
+		<label>DAQEMON Service</label><div class="service-status" data-status="">
+			<span id="service-enabled" class="statusbage on">Enabled</span>
+			<span id="service-disabled" class="statusbage off">Disabled</span>
+			<span id="service-running" class="statusbage on">Running</span>
+			<span id="service-stopped" class="statusbage off">Stopped</span>
+		</div>
+	</div>
+	<div id="port">
+		<label>Port</label><div class="port-status">
+			<span id="port-dev" class="statusbage on"></span>
+		</div>
+	</div>
+	<div id="queue">
+		<label>Data Queue</label><div class="queue-status" data-status="-">
+			<span id="queue-ok" class="statusbage on">Empty</span>
+			<span id="queue-length" class="message">1000</span>
+		</div>
+	</div>
+	<div id="server">
+		<label>EMON Server</label><div class="server-status" data-status="-">
+			<span id="server-ok" class="statusbage on">OK</span>
+			<span id="server-error" class="error">Error</span>
+			<span id="server-unknow">?</span>
+		</div>
+	</div>
+  </fieldset>
+  <fieldset id="data">
+	<legend><label>Actual data</label></legend>
+	<label>Recent sample metadata</label>
+	<div id="meta" class="grid3c">
+		<div class="subgrid"><label>Date Time</label><span id="datetime" class="number"></span></div>
+		<div class="subgrid"><label>Timestamp</label><span id="time" class="number"></span></div>
+		<div class="subgrid"><label>Rate</label><span id="rate" class="number"></span></div>
+	</div>
+	<label id="recent-samples-label">Combined data from recent samples</label>
+	<div class="grid3c"><div class="input subgrid"><label></label><span class="value number"></span></div></div>
+  </fieldset>
+  <fieldset id="error-log">
+	<legend><label>Service's log</label></legend>
+	<div class="log-lines">
+		<div class="log-line"></div>
+	</div>
+  </fieldset>
+</div>
+</body>
+<script type="text/javascript" src="pure.js"></script>
+<script type="text/javascript" src="daqemon.js"></script>
+<script>
+
+var UI;
+document.mcumodel = null;
+
+function _profile(match) {
+	return typeof(match)=='function' ? (a) => match(a.p.item.id) : (a)=> a.p.item.id == match;
+}
+
+window.onload = function() {
+	UI = new UIStatus();
+	UI.directives = {
+		'.input' : {
+			'p<-data' : {
+				'label' : 'p.input',
+				'.value' : p=>p.item.error || p.item.value,
+				'.value@class+': p=>p.item.error ? ' error' : ''
+			},
+			sort : (a,b)=>a.input.localeCompare(b.input),
+		},
+		'#datetime' : 'meta.datetime',
+		'#time': 'meta.time',
+		'#rate': 'meta.rate',
+		'#datetime@class+' : c=>(c.context.meta.now-c.context.meta.time)>620 ? ' error' : '',
+	};
+
+	UI.controls.about = '#about';
+	UI.init();
+	if( document.mcumodel ) {
+		UI.render(document.mcumodel);
+		delete document.mcumodel;
+	}
+};
+
+function render(model) {
+	if( UI )
+		UI.render(model);
+	else
+		document.mcumodel = model;
+};
+</script>
+</html>

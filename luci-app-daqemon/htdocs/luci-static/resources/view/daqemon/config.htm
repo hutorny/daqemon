@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<!-- config.htm - the Configuration page
+   This file is a part of DAQEMON application
+   Copyright (C) 2020-2021 Eugene Hutorny <eugene@hutorny.in.ua>
+   DAQEMON is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License v2
+   as published by the Free Software Foundation;
+   License:  https://opensource.org/licenses/GPL-2.0 -->
+
+<html lang="en">
+  <head>
+	<meta charset="utf-8">
+	<title>DAQEMON - Configuration</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<meta name="author" content="">
+	<base href="/luci-static/resources/view/daqemon/">
+	<link rel="stylesheet" href="responsive.css">
+	<link rel="stylesheet" href="style.css">
+	<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+	<link rel="icon" type="image/x-icon" sizes="16x16" href="favicon.ico">
+	<style type="text/css">
+		.td-input-device,
+		.td-input-name,
+		.td-device-name { width: 7em; }
+		.td-device-tag { width: 7em; }
+		.td-device-model { width: 7em; }
+		.td-device-id { width: 3.5em; }
+		.td-device-slave-id { width: 3.5em; }
+		.td-device-inputs { max-width: 28em; }
+		.td-processing { width: 19em; }
+		fieldset table input, fieldset table select, fieldset td button { width:100%; }
+		fieldset#inputs { padding-bottom: 0; }
+		.device-slave-id { text-align: right; }
+		.td-device-actions { width: 6em; text-align: center; }
+		.td-polling-interval { width: 3em; }
+		.td-input-QoS { width: 2em; text-align: center; }
+		.device-inputs-field .msdl-group-selector ~ ul.selection li { display: none; }
+		.processbase, .inputbage { user-select: none; }
+		.inputdescription, .processname { margin-left: 0.5em; color: black; }
+		.inputunit:not(:empty):before { content: ', ' }
+		.template { display: none; }
+		#container { min-width : 540px; }
+		html { overflow-x: hidden; }
+		#slaveids { min-width : calc(50% + 1.2em); }
+		#actions-preview {
+			position: fixed;
+			top: 3em;
+			left: calc(50% - 15em);
+			width: 30em;
+			border-radius: 8px;
+			padding: 1em 2em;
+			margin: auto;
+			border: 3px solid #800;
+			background: white;
+			display: none;
+			opacity: 0;
+			transition-timing-function: ease-in;
+			transition-duration: 0.3s;
+			transition-property: opacity;
+			z-index: 20;
+		}
+		#actions-preview h2 { text-align: center; color: #800; }
+		#action-list {
+			display: grid;
+			margin: 0 2em;
+			max-height: 25em;
+			overflow-y: scroll;
+		}
+		.action-status { display: inline-block; background-color: unset; border: unset;}
+		#actions-confirm { margin: 1em 2em 0 2em; }
+		#actions-confirm .button { width: 50%; }
+		.action-preview { display: grid; grid-template-columns: 1.5em 1fr 1fr 1fr; padding: 1px 4px 1px 10px; }
+		.action-preview .success::before, .action-preview .failure::before { margin-top: -0.4em; }
+		.action-preview:first-child { border-radius: 4px 4px 0 0 }
+		.action-preview:last-child { border-radius: 0 0 4px 4px }
+		.action-use, .action-create, .action-update, .class-input, .class-feed { display: none }
+		.action-preview[data-action="create"] { background-color: #b7f9b720; }
+		.action-preview[data-action="create"] .action-create { display: inline-flex; }
+		.action-preview[data-action="update"] .action-update { display: inline-flex; }
+		.action-preview[data-action="update"],
+		.action-preview[data-action="use"] { background-color: #f9eeb750; }
+		.action-preview[data-action="use"] .action-use { display: inline-flex; }
+		.action-preview[data-class="feed"] .class-feed { display: inline-flex; }
+		.action-preview[data-class="input"] .class-input { display: inline-flex; }
+		#capture { display: none; }
+		.td-device-actions .button-apply.spin { color: #FFF0 }
+		.td-device-actions .button-apply.spin:before { left: -2px; }
+		#test-results {
+			position: fixed;
+			top: 3em;
+			left: calc(50% - 10em);
+			width: 20em;
+			border-radius: 8px;
+			padding: 0.5em 0.5em;
+			margin: auto;
+			border: 3px solid #080;
+			background: white;
+			display: none;
+			opacity: 0;
+			transition-timing-function: ease-in;
+			transition-duration: 0.3s;
+			transition-property: opacity;
+			z-index: 15;
+		}
+		#test-results h3 { text-align: center; color: #080; }
+		.test-result { display: grid; grid-template-columns: 1.5em 1fr 2fr; padding: 1px 1px 1px 1px; }
+		.test-status { display: inline-block; background-color: unset; border: unset;}
+		.test-result .success::before, .test-result .failure::before { margin-top: -0.4em; }
+
+		.xclose { right: -0.4em; top: -0.7em; display: block; }
+		.xclose:before { font-size: 1.6em; }
+		@media screen and (max-width: 900px) { .td-device-actions { width: 5.2em; }}
+		#formfooter { display: grid; grid-template-columns: auto 32em; }
+	</style>
+  </head>
+<body>
+<div id="container">
+	<h2 id="actions">Configuration</h2>
+	  <fieldset id="devices">
+		<legend>
+			<label class="default">MODBUS Devices</label>
+		</legend>
+		<table class="va-middle">
+		<tbody>
+			<tr>
+				<th title="Slave ID" class="td-device-slave-id">ID</th>
+				<th class="td-device-model">Model</th>
+				<th class="td-device-name">Name</th>
+				<th class="td-device-tag">Tag</th>
+				<th class="td-device-inputs">Inputs</th>
+				<th class="td-device-actions">Actions</th>
+			</tr>
+		</tbody>
+		<tfoot class="template">
+			<tr class="template" id="device-">
+			<td class="td-device-slave-id"><input type="text" class="device-slave-id type-int unique" readonly="readonly" id="device-slave-id-" title="MODBUS slave ID"></td>
+			<td class="td-device-model">
+				<select class="device-model unique w100p input-select state" title="Device model" data-control="device-input-dropdown-"><option></option></select>
+			</td>
+			<td class="td-device-name">
+				<input  type="text" pattern="^[^\s\-\+!-#%-/:-?]+$" class="device-name unique state" id="device-name-" maxlength="32"
+				title="User-given device name, must not contain spaces, punctuation and math signs" placeholder="meter">
+			</td>
+			<td class="td-device-tag">
+				<input type="text" class="device-tag state" maxlength="256" title="User-given device tag" placeholder="Main meter">
+			</td>
+			<td class="td-device-inputs">
+				<div class="device-inputs-field msdl-dropdown-container w100p">
+					<div class="msdl-dropdown" tabindex="0" >
+						<input type="checkbox" class="hidden-input device-input state msdl-selection-control" id="msdl-item-" data-control="device-input-dropdown-">
+						<input type="text" class="device-input-selector hidden-input msdl-group-selector" data-control="device-input-dropdown-">
+						<input type="checkbox" class="hidden-input dropdown-control" id="device-input-dropdown-" data-control="device-input-dropdown-">
+						<ul tabindex="-1" class="selection" data-control="device-input-dropdown-">
+							<li id="msdl-item-" class="model-"><label for="msdl-item-"><span class="checkmark"></span><span
+								class="inputbage input-"></span><span class="inputdescription"></span><span class="inputunit"></span></label></li>
+						</ul>
+						<ul tabindex="-1" class="preview" data-control="device-input-dropdown-">
+							<li id="msdl-item-" class="model-"><span class="inputbage input-"></span></li>
+						</ul>
+						<label class="open" data-control="device-input-dropdown-" tabindex="-1">▾</label>
+					</div>
+				</div>
+			</td>
+			<td class="td-device-actions">
+				<button class="action-button button button-apply" title="Test reading data">&#x27A4;</button>
+				<button class="action-button button button-remove" title="Remove device from this list">&#x274C;</button>
+			</td>
+			</tr>
+		</tfoot>
+		</table>
+		<div id="modbus-actions" class="flex-box">
+			<input id="slaveids" type="text" class="progressbar w100p" pattern="(\s*([1-9]\d?)|(1\d\d)|(2[0-4]\d))*"
+					style="border: none; box-shadow: none; cursor: default;">
+			<button id="scan" class="button" title="Scan MODBUS for devices">Scan</button>
+			<button id="add-unlisted" class="button button-add" disabled title="Add unlisted">Add unlisted</button>
+		</div>
+	</fieldset>
+	<fieldset id="inputs">
+		<legend>
+			<label class="default" >Inputs and Processing</label>
+		</legend>
+		<table class="va-middle"><tbody>
+			<tr>
+				<th class="td-input-device">Input</th>
+				<th class="td-input-name">Tag</th>
+				<th class="td-polling-interval">Interval</th>
+				<th class="td-input-QoS">QoS</th>
+				<th class="td-processing">Processing</th>
+			</tr>
+
+		</tbody>
+		<tfoot class="template">
+			<tr class="template hiding" id="input-">
+				<td class="td-input-device">
+					<input id="identifier-" class="identifier" readonly="readonly" value="" data-device="">
+				</td>
+				<td class="td-input-name">
+					<input id="input-name-" class="input-name state" maxlength="32" title="User-given input tag" placeholder="meter">
+				</td>
+				<td class="td-polling-interval">
+					<select id="input-polling-interval-" class="type-int polling-interval state input-select">
+						<option value="1">1 min</option>
+						<option value="10" selected="selected">10 min</option>
+					</select>
+				</td>
+				<td class="td-input-QoS">
+					<input type="checkbox" class="input-QoS state" name="QoS_enable" id="input-QoS-">
+				</td>
+				<td class="td-processing">
+					<div class="input-process-field msdl-dropdown-container w100p" id="input-processes-">
+						<div class="msdl-dropdown" tabindex="0" >
+							<input type="checkbox" class="hidden-input msdl-selection-control state" id="msdl-item-" data-control="input-process-dropdown-">
+							<input type="checkbox" class="hidden-input dropdown-control" id="input-process-dropdown-" data-control="input-process-dropdown-">
+							<ul tabindex="-1" class="selection" data-control="input-process-dropdown-">
+								<li id="msdl-item-" class="process-" data-disabled>
+									<label for="msdl-item-"><span class="checkmark"></span><span class="processbage process-"></span><span class="processname process-name-" title=""></span></label>
+								</li>
+							</ul>
+							<ul tabindex="-1" class="preview" data-control="input-process-dropdown-">
+								<li id="msdl-item-" class="process-" data-disabled><span class="processbage process-"></span></li>
+							</ul>
+							<label class="open" data-control="input-process-dropdown-" tabindex="-1">▾</label>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</tfoot>
+		</table>
+	</fieldset>
+	<div id="formfooter">
+		<div id="errors" style="visibility:hidden"></div>
+		<div id="actions" class="flex-box">
+			<input id="deviceid" type="text" class="hidden-input" value=""></input>
+			<button id="apply" class="button button-apply important" disabled="disabled" title="Creates or updates inputs and feeds on the server">Update</button>
+			<div id="save" class="button dropdown button-save" title="Saves setup on the router">
+				<input id="save-and-apply-enable" type="checkbox" class="hidden-input">
+				<input id="save-dropdown" type="checkbox" class="hidden-input dropdown-control"">
+				<ul><li id="validate">Validate</li><li>Save</li><li id="saveapply">Save & Apply</li></ul>
+				<span id="save-only">Save</span><span id="saveapply">Save & Apply</span>
+				<label for="save-dropdown" class="open">▾</label>
+			</div>
+			<button id="erase" class="button button-remove" data-action="reset" title="Erases configuration"><span class="erase">Erase</span><span class="reset">Reset</span></button>
+		</div>
+	</div>
+</div>
+<div id="test-results">
+	<h3>Test results:</h3>
+	<div id="test-data">
+		<div class="test-result">
+			<span class="test-status "></span>
+			<span class="input-name"></span>
+			<span class="data-value"></span>
+		</div>
+	</div>
+	<div class="xclose"></div>
+</div>
+<div id="actions-preview">
+	<h2>The following actions will apply:</h2>
+	<div id="action-list">
+		<div class="action-preview">
+			<span class="action-status"></span>
+			<span class="action-create">Create</span>
+			<span class="action-update">Update</span>
+			<span class="action-use">Use</span>
+			<span class="class-input">input</span>
+			<span class="class-feed">feed</span>
+			<span class="object-name"></span>
+		</div>
+	</div>
+	<div id="actions-confirm" class="flex-box">
+		<button id="cancel" class="button" title="">Cancel</button>
+		<button id="ok" class="button button-apply important" title="Creates or updates inputs and feeds on the server">OK, do it!</button>
+		<button id="close" class="button" title="Closes this form" style="display:none">Close</button>
+	</div>
+</div>
+<div class="capture"></div>
+</body>
+<script type="text/javascript" src="pure.js"></script>
+<script type="text/javascript" src="daqemon.js"></script>
+<script>
+var UI;
+document.mcumodel = null;
+window.onload = function() {
+	UI = new UIConfig();
+	UI.directives.models = { 'option' : { 'p<-' : { '.' : 'p.name', '@value': 'p.name'}}};
+	UI.directives.inputlist = {
+		'.selection li' : {
+			'p<-' : {
+				'@class+' : 'p.model',
+				'span.input-' : 'p.name',
+				'span.input-@class+' : 'p.class',
+				'label@for+' : '#{p.pos}-',
+				'@id+' : '#{p.pos}-',
+				'.inputunit' : 'p.unit',
+				'.inputdescription' : 'p.description',
+		}},
+		'.preview li' : {
+			'p<-' : {
+				'@class+' : 'p.model',
+				'span.input-' : 'p.name',
+				'span.input-@class+' : 'p.class',
+				'@id+' : '#{p.pos}-',
+			}},
+		'.msdl-selection-control' : {
+			'p<-' : {
+				'@id+' : '#{p.pos}-',
+				'@data-device' : 'p.name',
+				'@data-model' : 'p.model',
+				'@data-unit' : 'p.unit',
+				'@data-name' : 'p.name'
+			}
+		}
+	};
+	UI.directives.processlist = {
+			'.selection li' : {
+				'p<-' : {
+					'@class+' : 'p.id',
+					'span.process-' : 'p.id',
+					'span.processname'   : 'p.name',
+					'span.processname@title' : 'p.description',
+					'span.process-@class+' : 'p.id',
+					'label@for+' : '#{p.id}-',
+					'@id+' : '#{p.pos}-',
+			}},
+			'.preview li' : {
+				'p<-' : {
+					'@class+' : 'p.id',
+					'span.process-' : 'p.id',
+					'span.process-@class+' : 'p.id',
+					'@id+' : '#{p.id}-',
+				}},
+			'.msdl-selection-control' : {
+				'p<-' : { '@id+' : '#{p.id}-', '@data-process' : 'p.id' },
+				sort : (a,b)=>a.sort-b.sort,
+			}
+		};
+	UI.directives.devices = {
+		'#device-' : {
+			'p<-devices_' : {
+				'@id+' : 'p.slaveid',
+				'@data-device'			: 'p.slaveid',
+				'.device-slave-id@value' : 'p.slaveid',
+				'.device-slave-id@id+' : 'p.slaveid',
+				'.device-slave-id@required'	 : is_required,
+				'.device-model@data-control+' : 'p.slaveid',
+				'.device-model@data-device' : 'p.slaveid',
+				'.device-model@required'	 : is_required,
+				'.device-name@value' : 'p.name',
+				'.device-name@data-value' : 'p.name',
+				'.device-name@id+' : 'p.slaveid',
+				'.device-name@data-device' : 'p.slaveid',
+				'.device-name@required'	 : is_required,
+				'.device-tag@value' : 'p.tag',
+				'.open@data-control+' : 'p.slaveid',
+				'.dropdown-control@id+' : 'p.slaveid',
+				'ul@data-control+' : 'p.slaveid',
+				//'.msdl-group-selector@id+' : 'p.slaveid',
+				'.msdl-group-selector@value': 'p.model',
+				'.msdl-selection-control@data-device' : 'p.slaveid',
+				'.msdl-selection-control@id+' : 'p.slaveid',
+				'.selection label@for+' : 'p.slaveid',
+				'li@id+' : 'p.slaveid',
+				'.msdl-dropdown input@data-control+' : 'p.slaveid',
+				//'.td-device-inputs@id+' : 'p.name',
+				'@class' : template_class,
+				'.action-button@data-device' : 'p.slaveid',
+			}, sort : (a,b)=>asint(a.slaveid, 0x7FFFFFFF)-asint(b.slaveid, 0x7FFFFFFF),
+		},
+	}
+	UI.directives.inputs = {
+		'#input-' : {
+			'p<-inputs' : {
+				'@id+'  				: 'p.id',
+				'@data-device'			: 'p.deviceid',
+				'.identifier@value'		: 'p.identifier',
+				'.identifier@data-device': 'p.deviceid',
+				'.identifier@data-name'	: 'p.device',
+				'.identifier@data-input': 'p.input',
+				'.identifier@data-unit': 'p.unit',
+				'.identifier@data-orphan': 'p.orphan',
+				'.identifier@id+'		: 'p.id',
+				'.input-name@value'		: 'p.tag',
+				'.input-name@data-device': 'p.deviceid',
+				'.input-name@data-edited': 'p.persistent',
+				'.polling-interval@id+'	: 'p.id',
+				'.polling-interval option@selected' : _when(a=>a.interval==10), // this only works for two options
+				'.input-name@id+'		: 'p.id',
+				'.input-QoS@id+'		: 'p.id',
+				'.input-QoS@checked'	:  _when(p=>0!=(p.qos^0)),
+				'.input-process-field@id+': 'p.id',
+				'.input-process-field@data-device': 'p.deviceid',
+				'.open@data-control+' 	: 'p.id',
+				'.dropdown-control@id+' : 'p.id',
+				'ul@data-control+' 		: 'p.id',
+				'.msdl-selection-control@data-device' : 'p.id',
+				'.msdl-selection-control@id+' : 'p.id',
+				'.selection label@for+' : 'p.id',
+				'li@id+' : 'p.id',
+				'.msdl-dropdown input@data-control+' : 'p.id',
+				'@class' : input_class,
+			}
+		}
+	},
+	UI.directives.config = {
+		'#device-' : UI.directives.devices['#device-'],
+		//'#input-'  : UI.directives.inputs['#input-'],
+	};
+	UI.directives.actionspreview = {
+		'.action-preview' : {
+			'p<-' : {
+				'@data-class'	: 'p.class',
+				'@data-action'	: 'p.action',
+				'@data-id'		: 'p.name',
+				'.object-name'	: 'p.name',
+			}
+		}
+	}
+	UI.directives.testresults = {
+		'.test-result' : {
+			'p<-' : {
+				'.input-name'	: 'p.pos',
+				'.data-value'	: 'p',
+				'.test-status@class+' : test_status,
+			}
+		}
+	}
+	UI.directives.collect = {
+		'[devices' : {
+			'#devices tbody tr[id]:not(.hiding)' : {
+				'.device-slave-id' : 'slaveid',
+				'.device-model'    : 'model',
+				'.device-tag'      : 'tag',
+				'.device-name'     : 'name',
+			}
+		},
+		'[inputs' : {
+			'#inputs tbody tr[id]:not(.hiding):not(.orphan)' : {
+				'.identifier'           : 'name',
+				'.identifier@data-name' : 'device',
+				'.identifier@data-unit' : 'unit',
+				'.identifier@data-input' : 'input',
+				'.input-name'           : 'tag',
+				'.polling-interval'     : 'interval',
+				'.input-QoS@checked'    : 'qos',
+				'[processes' : {
+					'input[data-process]:checked' : '@data-process'
+				}
+			}
+		}
+	};
+	//UI.controls.about = '#about';
+	UI.init();
+	if( document.mcumodel ) {
+		UI.render(document.mcumodel);
+		delete document.mcumodel;
+	}
+};
+
+function render(model) {
+	if( UI )
+		UI.render(model);
+	else
+		document.mcumodel = model;
+};
+</script>
+</html>

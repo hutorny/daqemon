@@ -1,0 +1,106 @@
+/* main.css - style sheets for the main page
+   This file is a part of DAQEMON application
+   Copyright (C) 2020-2021 Eugene Hutorny <eugene@hutorny.in.ua>
+   DAQEMON is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License v2
+   as published by the Free Software Foundation;
+   License:  https://opensource.org/licenses/GPL-2.0              */
+
+@CHARSET "UTF-8";
+#loading {
+	opacity: 1;
+	animation-name: fadein;
+	animation-iteration-count: 1;
+	animation-timing-function: ease-in;
+	animation-duration: 3s;
+	display: flex;
+	align-items: center;
+}
+#logo {
+	position: absolute;
+	background:  url('daqemon-logo.png') no-repeat;
+	width:44px;
+	height: 40px;
+	top: 42px;
+	right: 2px;
+	z-index: 2147483647;
+}
+#msgtext {
+	margin-left: 1em;
+}
+#msgtext:empty:before {
+    content: 'This site requires JavaScript ES6';
+}
+
+#maincontent.container {
+	width: 100%;
+	height: calc(100% - 48px);
+	/* add min-heigh as needed */
+}
+
+#alt {
+    width: 0px;
+    height: 0px;
+    position: absolute;
+    top: 60px;
+}
+
+#alt div {
+    width: 30px;
+    height: 30px;
+    position: relative;
+    left: 940px;
+    background-image: url(alt.svg);
+    opacity: 0.3;
+	transition-timing-function: ease-in;
+	transition-duration: 1s;
+	transition-property: opacity, transform;
+}
+
+#alt div:hover { opacity: 1; transform: rotate(-90deg); }
+
+@keyframes fadein {
+	  0% { opacity: 0; }
+	 20% { opacity: 0; }
+	 40% { opacity: 0; }
+	 60% { opacity: 0; }
+	 80% { opacity: 0.5; }
+	100% { opacity: 1; }
+}
+iframe {
+	border: 0;
+	width: 100%;
+	height: 100%;
+	min-height: 500px;
+	overflow-x: hidden;
+	display: none;
+	opacity: 0;
+	transition: opacity 0.2s ease-in;
+}
+
+html, body {
+	margin:0;
+	height: calc(100% - 20px);
+}
+@media screen and (max-width: 910px) {
+	body iframe { min-height: 720px; }
+	#logo { background: url('daqemon-logo.png'); width:44px;	height: 40px; }
+}
+
+@media screen and (max-width: 1320px) {
+	#logo.top {
+		background: url('daqemon-logo.png');
+		width: 44px;
+		height: 40px;
+		top: 0px;
+	}
+}
+
+@media screen and (max-width: 1000px) {
+	#alt { right: 0 }
+	#alt div { position: absolute; left: -30px; }
+}
+footer {
+	overflow-x: hidden;
+	white-space: nowrap;
+}

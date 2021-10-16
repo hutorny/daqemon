@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<!-- dashboard.htm - the Dashboard page
+   This file is a part of DAQEMON application
+   Copyright (C) 2020-2021 Eugene Hutorny <eugene@hutorny.in.ua>
+   DAQEMON is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License v2
+   as published by the Free Software Foundation;
+   License:  https://opensource.org/licenses/GPL-2.0 -->
+
+<html lang="en">
+  <head>
+	<meta charset="utf-8">
+	<title>DAQEMON - Dashboard</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<meta name="author" content="">
+	<base href="/luci-static/resources/view/daqemon/">
+	<link rel="stylesheet" href="responsive.css">
+	<link rel="stylesheet" href="style.css">
+	<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+	<link rel="icon" type="image/x-icon" sizes="16x16" href="favicon.ico">
+	<style type="text/css">
+	.grid2c {
+		display: grid;
+		grid-template-columns: 12em 1fr;
+		grid-column-gap: 0.4em;
+		margin: 0 0.4em;
+	}
+	#dashlbl { line-height: 200%; }
+	#formfooter,
+	#dashboards { max-width: 60%; }
+	#actions {
+		width: 12em;
+		float: right;
+	}
+	.a-button { text-align: center; }
+	</style>
+  </head>
+<body>
+<div id="container">
+	<h2>Dashboard selection</h2>
+	<fieldset class="" id="dashboards">
+		<legend>
+			<label class="default">Dashboard</label>
+		</legend>
+		<div class="grid2c">
+			<label id="dashlbl">Select a dashboard:</label>
+			<select id="dashboard" class="input-select w100p state" required>
+				<option value=""></option>
+			</select>
+			<label >Create/Manage:</label>
+			<a id="manage" href="" target="dashboard" class="a-button button-action">Visit the server to manage dashboards</a>
+		</div>
+	</fieldset>
+	<div id="formfooter">
+		<div id="actions" class="flex-box">
+			<input id="deviceid" type="text" class="hidden-input" value=""></input>
+			<button id="apply" class="button button-save important" title="Saves the link to the selected dashboard">Save</button>
+		</div>
+	</div>
+
+</div>
+</body>
+<script type="text/javascript" src="pure.js"></script>
+<script type="text/javascript" src="daqemon.js"></script>
+<script>
+
+var UI;
+document.mcumodel = null;
+
+function _profile(match) {
+	return typeof(match)=='function' ? (a) => match(a.p.item.id) : (a)=> a.p.item.id == match;
+}
+
+window.onload = function() {
+	UI = new UIDashboard();
+	UI.directives = { 'option' : { 'p<-' : { '.' : 'p.name', '@title': 'p.description','@value': 'p.id', '@selected' : 'p.selected' }} },
+	UI.controls.about = '#about';
+	UI.init();
+	if( document.mcumodel ) {
+		UI.render(document.mcumodel);
+		delete document.mcumodel;
+	}
+};
+
+function render(model) {
+	if( UI )
+		UI.render(model);
+	else
+		document.mcumodel = model;
+};
+</script>
+</html>

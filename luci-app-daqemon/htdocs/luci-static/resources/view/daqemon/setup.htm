@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<!-- setup.htm - the Setup page
+   This file is a part of DAQEMON application
+   Copyright (C) 2020-2021 Eugene Hutorny <eugene@hutorny.in.ua>
+   DAQEMON is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License v2
+   as published by the Free Software Foundation;
+   License:  https://opensource.org/licenses/GPL-2.0 -->
+<html lang="en">
+  <head>
+	<meta charset="utf-8">
+	<title>DAQEMON - Setup</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<meta name="author" content="">
+	<base href="/luci-static/resources/view/daqemon/">
+	<link rel="stylesheet" href="responsive.css">
+	<link rel="stylesheet" href="style.css">
+	<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+	<link rel="icon" type="image/x-icon" sizes="16x16" href="favicon.ico">
+	<style type="text/css">
+		#fieldsets {
+			display: grid;
+			grid-template-rows: auto auto;
+			grid-template-columns: 50% 50%;
+			grid-auto-flow: column;
+			/* grid-column-gap: 0.5em; */
+			grid-row-gap: 0.5em;
+		}
+		@media screen and (max-width: 900px) {
+			#fieldsets {
+				grid-template-rows: repeat(4, min-content);
+				grid-template-columns: 100%;
+			}
+			fieldset, h2 { padding-bottom: 0; }
+			input, select, .input-select { height: 24px; }
+		}
+		#server-actions #api_help { margin: 0 0 0 0.2em; }
+		#server-actions td { border-bottom: none; }
+		#service-actions button { width: 33%; text-align: center; }
+		#server-actions button,
+		#modbus-actions button { width: 50%; text-align: center; }
+		#fieldsets fieldset {
+			text-align: left;
+			flex-grow: 1;
+			padding: 0;
+		}
+		*[data-status="off"] .on { display: none; }
+		*[data-status="off"] .off { display: unset; }
+		*[data-status="on"] .on { display: unset; }
+		*[data-status="on"] .off { display: none; }
+		.row > *:first-child { margin-right: 0.5em }
+		.row > *:last-child { margin-left: 0.5em }
+		.bntcell { padding: 0.4em; }
+		/*.row > *:only-child { margin: 0; width: calc(50% - 0.25em); } */
+		option[value="-- Refresh --"] {
+			background-color: #eee;
+			font-style: italic;
+		}
+		button.button [disabled],
+		a[href=''] {
+			pointer-events: none;
+			cursor: default;
+			color : #999;
+			background: linear-gradient(#eee,#e0e0e0 25%,#ddd) no-repeat;
+		}
+		#multirate option {
+			max-width: 20em;
+		}
+		iframe.embedded {
+			position: absolute;
+			width: 400px;
+			height: 500px;
+			left: calc(50% - 200px);
+			top: calc(50% - 250px);
+			overflow: hidden;
+			border: 1px solid;
+			align-items: center;
+			background: #fff;
+			border-radius: 3px;
+			box-shadow: 0 0 3px #444;
+			display: flex;
+			flex-wrap: wrap;
+			z-index: 20;
+		}
+		iframe.embedded ~ .xclose {
+			display: flex;
+			position: absolute;
+			left: calc(50% + 200px - 2.2em);
+			top: calc(50% - 250px);
+			z-index: 30;
+		}
+		#capture { display: block }
+		iframe[src=''].embedded ~ .xclose,
+		iframe[src=''].embedded {
+			display: none;
+		}
+		iframe[src=''].embedded ~ #capture {
+			display: none;
+		}
+		#deviceid[value=''] ~ #apply #update { display: none !important; }
+		#deviceid[value=''] ~ #apply #create { display: inline !important; }
+		#deviceid:not([value='']) ~ #apply #update { display: inline !important; }
+		#deviceid:not([value='']) ~ #apply #create { display: none !important; }
+		#formfooter { display: grid; grid-template-columns: auto 32em; }
+	</style>
+  </head>
+<body>
+<div id="container">
+	<h2>Setup</h2>
+	<div id="fieldsets">
+		<fieldset id="server">
+			<legend>
+				<label class="default" >Server</label>
+			</legend>
+			<table>
+				<tr><td class="colA">URL:</td><td>
+					<input id="server_url" class="state w100p" type="url" required
+						title="Server's URL" placeholder="http://emoncms.org"></td></tr>
+				<tr><td class="colA">API key:</td><td>
+					<input id="api_key" class="state w100p" maxlength="32" required
+					pattern="^([0-9|[A-F]|[a-f])*$"
+					title="Enter an APYkey to use with the server">
+				</td></tr>
+				<tr id="server-actions" style="display: none"><td class="colA">Actions</td><td class="flex-box">
+					<button id="register" class="button open" disabled="disabled">Register</button>
+					<button id="api_help" class="button" disabled="disabled">Lookup API Key</button>
+					<iframe src="" class="embedded" id="emon"></iframe>
+					<div class="xclose"></div>
+					<div id="capture" class="capture"></div>
+				</td></tr>
+				<tr id="server-version" style="display: none"><td class="colA">Server version:</td><td>
+					<input id="server_version" class="w100p" readonly>
+				</td></tr>
+			</table>
+		</fieldset>
+		<fieldset class="" id="node">
+			<legend>
+				<label class="default">Node</label>
+			</legend>
+			<table>
+				<tr><td class="colA">Device profile:</td><td>
+					<select id="profile" class="input-select w100p state" required>
+						<option value=""></option>
+					</select>
+				</td></tr>
+				<tr><td class="colA">Node ID:</td><td>
+					<input id="node_id" class="state w100p" maxlength="32" placeholder="daq1" title="Enter an ID for this node" required></td></tr>
+				<tr><td class="colA">Name:</td><td>
+					<input id="node_name" class="state w100p" maxlength="32" placeholder="Meter" title="Enter an ID for this node" required></td></tr>
+				<tr><td class="colA">Location:</td><td>
+					<input id="node_location" class="state w100p" title="Enter location" placeholder="Home"></td></tr>
+				<tr><td class="colA">Description:</td><td>
+					<input id="node_description" class="state w100p" title="Enter description" placeholder="Main electicity meter"></td></tr>
+			</table>
+		</fieldset>
+		<fieldset id="daqemon">
+			<legend>
+				<label class="default" >DAQEMON</label>
+			</legend>
+			<table>
+				<tr><td class="colA">Rate schema:</td><td>
+					<select id="multirate" class="state input-select w100p" title="Multirate tariff schema">
+						<option value=""></option>
+					</select>
+					</td></tr>
+				<tr><td class="colA">Retention (hrs):</td><td>
+					<input id="retention" class="w100p state type-int" maxlength="2" placeholder="0-24"  pattern="(2[0-4])|1[0-9]|[0-9]"></td></tr>
+				<tr><td class="colA">Service</td><td id="service-actions" class="flex-box">
+					<button id="service-enable" class="daq button" disabled="disabled" data-status="off"><span class="on">Enabled</span><span class="off">Disabled</span></button>
+					<button id="service-start" class="daq button" disabled="disabled" data-status="off"><span class="on">Running</span><span class="off">Stopped</span></button>
+					<button id="service-restart" class="button button-action" disabled="disabled">Restart</button>
+				</td></tr>
+			</table>
+		</fieldset>
+		<fieldset id="modbus">
+			<legend>
+				<label class="default">MODBUS</label>
+			</legend>
+			<table>
+				<tr><td class="colA">Port:</td><td>
+					<select id="interface" class="state input-select w100p">
+						<option value=""></option>
+					</select>
+				</td></tr>
+				<tr><td class="colA">Baudrate:</td><td>
+					<select id="baudrate" class="state input-select w100p type-int">
+						<option value="0"></option>
+					</select>
+				</td></tr>
+				<tr class="dlm"><td  class="colA">Parity:</td><td>
+					<select id="parity" class="state input-select w100p">
+						<option value=""></option>
+					</select>
+				</td></tr>
+				<tr><td class="colA">Slave IDs:</td><td>
+					<input id="slaveids" type="text" class="progressbar w100p" pattern="(\s*([1-9]\d?)|(1\d\d)|(2[0-4]\d))*">
+				</td></tr><tr><td>Actions</td>
+				<td id="modbus-actions" class="flex-box">
+					<button id="find" class="daq button" title="Find first MODBUS device" disabled="disabled">Find first</button>
+					<button id="scan" class="daq button" title="Scan MODBUS for devices" disabled="disabled">Scan</button>
+				</td></tr>
+				</table>
+		</fieldset>
+	</div>
+	<div id="formfooter">
+		<div id="errors" style="visibility:hidden"></div>
+		<div id="actions" class="flex-box">
+			<input id="deviceid" type="text" class="hidden-input dropdow-control" value=""></input>
+			<button id="apply" class="button button-apply important" disabled="disabled" title="Creates or updates node on the server"><span id="create">Create Node</span><span id="update">Update Node</span></button>
+			<div id="save" class="button dropdown button-save" title="Saves setup on the router">
+				<input id="save-and-apply-enable" type="checkbox" class="hidden-input">
+				<input id="save-dropdown" type="checkbox" class="hidden-input dropdown-control"">
+				<ul><li id="validate">Validate</li><li>Save</li><li id="saveapply">Save & Apply</li></ul>
+				<span id="save-only">Save</span><span id="saveapply">Save & Apply</span><span id="next">Next</span>
+				<label for="save-dropdown" class="open">▾</label>
+			</div>
+			<button id="erase" class="button button-remove" data-action="reset" title="Erases configuration"><span class="erase">Erase</span><span class="reset">Reset</span></button>
+		</div>
+	</div>
+</div>
+</body>
+<script type="text/javascript" src="pure.js"></script>
+<script type="text/javascript" src="daqemon.js"></script>
+<script>
+
+var UI;
+document.mcumodel = null;
+
+function _profile(match) {
+	return typeof(match)=='function' ? (a) => match(a.p.item.id) : (a)=> a.p.item.id == match;
+}
+
+window.onload = function() {
+	UI = new UISetup();
+	UI.directives = {
+		interfaces : { 'option' : _option((value)=>UI.model.config.interface.new_rtu[0]===value) },
+		baudrates  : { 'option' : _option((value)=>UI.model.config.interface.new_rtu[1]===value) },
+		parities   : { 'option' : _option((value)=>UI.model.config.interface.new_rtu[2]===value) },
+		multirates : { 'option' : { 'p<-' : { '.' : 'p.name', '@value': 'p.id', '@selected' :
+						_when((value)=>UI.model.config.daqemon.rate===value.id || value.id==='') }}},
+		profiles   : { 'option'   : { 'p<-' : { '.' : 'p.name', '@value': 'p.id', '@selected' :
+						_profile(value=>UI.isCurrentProfile(value))}} },
+		fields : {
+			'#node_id@value'			: 'config.client.nodeid',
+			'#node_name@value'			: 'config.client.name',
+			'#node_location@value'		: 'config.client.location',
+			'#node_description@value' 	: 'config.client.description',
+			'#deviceid@value' 			: 'config.client.deviceid',
+			'#api_key@value' 			: 'config.server.apikey',
+			'#server_url@value'			: 'config.server.url',
+			'#slaveids@value'			: 'modbus.slaveids_',
+			'#retention@value' 			: 'config.daqemon.retention',
+		},
+		profile : {
+			'#node_id@value'			: 'nodeid',
+			'#node_name@value'			: 'name',
+			//'#node_location@value'		: 'location', // location is not stored on the server
+			'#node_description@value' 	: 'description',
+		},
+		collect : {
+			'{client' : {
+				'#node_id'			: 'nodeid',
+				'#node_name'		: 'name',
+				'#node_location'	: 'location',
+				'#node_description'	: 'description',
+				'#profile'			: 'type',
+				'#deviceid'			: 'deviceid',
+			},
+			'{server' : {
+				'#server_url'		: 'url',
+				'#api_key' 			: 'apikey',
+			},
+			'{interface' : {
+				'[new_rtu'  : ['#interface', '#baudrate', '#parity'],
+				'#slaveids' : 'slaveids',
+			},
+			'{daqemon' : {
+				'#multirate' : 'rate',
+				'#retention' : 'retention',
+			},
+		}
+	};
+
+	UI.controls.about = '#about';
+	UI.init();
+	if( document.mcumodel ) {
+		UI.render(document.mcumodel);
+		delete document.mcumodel;
+	}
+};
+
+function render(model) {
+	if( UI )
+		UI.render(model);
+	else
+		document.mcumodel = model;
+};
+</script>
+</html>

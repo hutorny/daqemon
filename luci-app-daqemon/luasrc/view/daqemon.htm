@@ -1,0 +1,10 @@
+<%+header%><a id="logo" href="#"></a>
+<div id="loading"><img src="/luci-static/resources/icons/loading.gif"><span id="msgtext"></span></div><iframe></iframe><div id="alt" style="display:none"><div></div></div></body>
+<link rel="stylesheet" type="text/css" href="/luci-static/resources/view/daqemon/main.css">
+<script type="text/javascript">
+var CFG={msgbox:"#loading", msgtext:"#msgtext"};
+var VIEW ="<%=VIEW%>";
+var ALT ="<%=ALT%>";
+var DATA = <%luci.http.write_json(DATA)%>
+</script><script type="text/javascript" src="/luci-static/resources/view/daqemon/main.js"></script>
+<%+footer%>
