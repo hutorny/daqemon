@@ -1,6 +1,6 @@
 DAQEMON
 =======
-Data Aquisition Application for Open Energy Monitor CMS
+Data Acquisition Application for Open Energy Monitor CMS
 
 # Introduction
 DAQEMON is an application running on an OpenWRT router or access point, 
